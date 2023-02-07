@@ -473,14 +473,15 @@ static int h264_metadata_handle_a53_cc(AVBSFContext *bsf, AVPacket *pkt,
     SEIRawMessage *message;
     int err;
 
+    uint8_t *a53_side_data = NULL;
+    size_t a53_side_data_size = 0;
+
     message = NULL;
     while (ff_cbs_sei_find_message(ctx->common.output, au,
                                    SEI_TYPE_USER_DATA_REGISTERED_ITU_T_T35,
                                    &message) == 0) {
         SEIRawUserDataRegistered *udr = message->payload;
         A53UserData a53_ud;
-        uint8_t *a53_side_data = NULL;
-        size_t a53_side_data_size = 0;
 
         if (udr->data_length < 2) {
             // Too short to contain a provider code.
