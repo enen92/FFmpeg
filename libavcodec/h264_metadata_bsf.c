@@ -519,8 +519,22 @@ static int h264_metadata_handle_a53_cc(AVBSFContext *bsf, AVPacket *pkt,
         }
 
         if (a53_side_data) {
+            size_t old_a53_side_data_size = 0;
+            uint8_t *old_a53_side_data = av_packet_get_side_data(pkt, AV_PKT_DATA_A53_CC, old_a53_side_data_size);
+
+            uint8_t *new_side_data = av_realloc(a53_side_data, old_a53_side_data_size + a53_side_data_size);
+            if (!new_side_data) {
+                av_freep(&a53_side_data);
+                return AVERROR(ENOMEM);
+            }
+
+            if (old_a53_side_data > 0) {
+                memcpy(new_side_data, old_a53_side_data, old_a53_side_data_size); 
+            }
+            memcpy(new_side_data + old_a53_side_data_size, a53_side_data, a53_side_data_size);
+
             err = av_packet_add_side_data(pkt, AV_PKT_DATA_A53_CC,
-                                          a53_side_data, a53_side_data_size);
+                                          new_side_data, old_a53_side_data_size + a53_side_data_size);
             if (err) {
                 av_log(bsf, AV_LOG_ERROR, "Failed to attach extracted A/53 "
                         "side data to packet.\n");
